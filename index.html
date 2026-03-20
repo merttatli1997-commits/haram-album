@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HARAM — ŞAM</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,300;1,400&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #080808;
+  --dark: #111010;
+  --gray: #1A1918;
+  --text: #F0EAD8;
+  --muted: #A8A098;
+  --red: #8B1A1A;
+  --red2: #C42B2B;
+  --border: rgba(240,234,216,0.12);
+}
+
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'IBM Plex Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* GRAIN */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.5;
+}
+
+/* SCANLINES */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px);
+  pointer-events: none;
+  z-index: 9998;
+}
+
+/* LAYOUT */
+.container {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+.site-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.on-air {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.on-air-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red2);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.album-title {
+  font-family: 'UnifrakturMaguntia', cursive;
+  font-size: clamp(64px, 15vw, 120px);
+  color: var(--text);
+  line-height: 0.9;
+  letter-spacing: 2px;
+  margin-bottom: 0.5rem;
+}
+
+.artist-name {
+  font-size: 15px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+.album-desc {
+  font-size: 15px;
+  font-style: italic;
+  color: #B8B0A0;
+  line-height: 1.8;
+  max-width: 420px;
+  margin: 0 auto;
+  font-weight: 300;
+}
+
+/* COVER */
+.cover-wrap {
+  position: relative;
+  margin: 0 auto 2.5rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.cover-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(30%) contrast(1.1);
+}
+
+.cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 60%, rgba(8,8,8,0.8));
+}
+
+/* PLAYER */
+.player-section {
+  margin-bottom: 2rem;
+}
+
+.now-playing-label {
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+
+.now-playing-track {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+  min-height: 28px;
+}
+
+.track-num {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 1.5rem;
+}
+
+/* PROGRESS */
+.progress-wrap {
+  position: relative;
+  height: 2px;
+  background: var(--border);
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--text);
+  width: 0%;
+  transition: width 0.5s linear;
+}
+
+.progress-scanning {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(200,192,176,0.3), transparent);
+  animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+  from { left: -100%; }
+  to { left: 100%; }
+}
+
+/* TIME */
+.time-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 1.5rem;
+}
+
+/* CONTROLS */
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.ctrl-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 8px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.ctrl-btn:hover { color: var(--text); }
+
+.play-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 1px solid rgba(200,192,176,0.2);
+  background: var(--gray);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.play-btn:hover {
+  background: var(--text);
+  color: var(--black);
+}
+
+/* VOLUME */
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 2.5rem;
+}
+
+.vol-label {
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  min-width: 40px;
+}
+
+input[type=range] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 2px;
+  background: var(--border);
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+}
+
+/* TRACKLIST */
+.tracklist-header {
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+}
+
+.track-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+  transition: opacity 0.2s;
+}
+
+.track-item.active { opacity: 1; }
+.track-item.played { opacity: 0.35; }
+.track-item.upcoming { opacity: 0.55; }
+
+.track-n {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 20px;
+  text-align: right;
+}
+
+.track-item.active .track-n { color: var(--red2); }
+
+.track-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+
+.track-item.active .track-dot {
+  background: var(--red2);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.track-name {
+  font-size: 15px;
+  color: var(--text);
+  flex: 1;
+}
+
+.track-item.played .track-name { color: var(--muted); }
+
+/* RADIO NOTE */
+.radio-note {
+  text-align: center;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  margin-top: 2rem;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  font-style: italic;
+}
+
+/* SOUNDCLOUD HIDDEN */
+#sc-widget { display: none; }
+
+/* FOOTER */
+footer {
+  margin-top: auto;
+  padding-top: 3rem;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 2px;
+}
+
+@media (max-width: 480px) {
+  .album-title { font-size: 72px; }
+  .container { padding: 2rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="start-overlay" style="position:fixed;inset:0;background:#080808;z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;" onclick="startRadio()">
+  <div style="font-family:'UnifrakturMaguntia',cursive;font-size:clamp(72px,15vw,120px);color:#F0EAD8;line-height:0.9;margin-bottom:2rem;">haram</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:6px;text-transform:uppercase;color:#9A9288;margin-bottom:3rem;">ŞAM</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#F0EAD8;border:1px solid rgba(240,234,216,0.2);padding:14px 40px;animation:blink 2s ease-in-out infinite;">▶ radyoyu başlat</div>
+  <style>@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }</style>
+</div>
+
+<div class="container">
+
+  <header class="site-header">
+    <div class="on-air"><span class="on-air-dot"></span> yayında</div>
+    <div class="album-title">haram</div>
+    <div class="artist-name">ŞAM</div>
+    <div class="album-desc">"Bu bir albüm değil, günlük. 20'li yaşlarım. Hayat sorgum, kendimle savaşım ve günahlarımla yüzleşmem."</div>
+  </header>
+
+  <div class="cover-wrap">
+    <img class="cover-img" src="https://i1.sndcdn.com/artworks-YdrZXdUChDqOpXlq-pC1KIA-t1080x1080.jpg" alt="HARAM" />
+    <div class="cover-overlay"></div>
+  </div>
+
+  <div class="player-section">
+    <div class="now-playing-label">şu an çalıyor</div>
+    <div class="now-playing-track" id="now-playing">yükleniyor...</div>
+    <div class="track-num" id="track-num">— / 31</div>
+
+    <div class="progress-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+      <div class="progress-scanning"></div>
+    </div>
+
+    <div class="time-row">
+      <span id="time-current">0:00</span>
+      <span id="time-total">—:——</span>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn" onclick="setVolume(-0.1)" title="ses kısalt">−</button>
+      <button class="play-btn" id="play-btn" onclick="togglePlay()">▶</button>
+      <button class="ctrl-btn" onclick="setVolume(0.1)" title="ses aç">+</button>
+    </div>
+
+    <div class="volume-row">
+      <span class="vol-label">ses</span>
+      <input type="range" id="volume-slider" min="0" max="100" value="80" oninput="onVolumeSlider(this.value)">
+    </div>
+  </div>
+
+  <div class="tracklist-header">
+    <span>parça listesi</span>
+    <span>31 şarkı</span>
+  </div>
+
+  <div id="tracklist"></div>
+
+  <div class="radio-note">
+    radyo usulü yayın — atlamak yok, sıra bozulmaz.<br>
+    nerede yakaladıysan oradan dinle.
+  </div>
+
+  <footer>
+    haramalbum.com &nbsp;·&nbsp; ŞAM © 2026
+  </footer>
+
+</div>
+
+<!-- SoundCloud Widget API -->
+<iframe id="sc-widget"
+  src="https://w.soundcloud.com/player/?url=https%3A//soundcloud.com/sam34trip/sets/haram-1&auto_play=false&buying=false&liking=false&download=false&sharing=false&show_artwork=false&show_comments=false&show_playcount=false&show_user=false&hide_related=true&visual=false&start_track=0&single_active=true"
+  width="100%" height="166" scrolling="no" frameborder="no" allow="autoplay">
+</iframe>
+
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script>
+const widget = SC.Widget(document.getElementById('sc-widget'));
+let tracks = [];
+let currentIndex = 0;
+let isPlaying = false;
+let duration = 0;
+let position = 0;
+let progressInterval = null;
+
+function startRadio() {
+  document.getElementById('start-overlay').style.display = 'none';
+  widget.play();
+}
+
+widget.bind(SC.Widget.Events.READY, () => {
+  widget.getSounds(sounds => {
+    tracks = sounds;
+    renderTracklist();
+    const randomStart = Math.floor(Math.random() * tracks.length);
+    currentIndex = randomStart;
+    widget.skip(randomStart);
+    updateNowPlaying();
+  });
+  widget.setVolume(80);
+});
+
+widget.bind(SC.Widget.Events.PLAY, () => {
+  isPlaying = true;
+  document.getElementById('play-btn').textContent = '⏸';
+  widget.getDuration(d => { duration = d; });
+  startProgressTracking();
+  if (!window._radioStarted) {
+    window._radioStarted = true;
+    setTimeout(() => {
+      widget.getDuration(d => {
+        if (d > 0) {
+          const randomPos = Math.floor(d * (0.1 + Math.random() * 0.7));
+          widget.seekTo(randomPos);
+        }
+      });
+    }, 500);
+  }
+});
+
+widget.bind(SC.Widget.Events.PAUSE, () => {
+  isPlaying = false;
+  document.getElementById('play-btn').textContent = '▶';
+  clearInterval(progressInterval);
+});
+
+widget.bind(SC.Widget.Events.FINISH, () => {
+  currentIndex = (currentIndex + 1) % tracks.length;
+  clientStartTime = Date.now();
+  clientStartPosition = 0;
+  clientDuration = null;
+  widget.skip(currentIndex);
+  widget.play();
+  updateNowPlaying();
+});
+
+widget.bind(SC.Widget.Events.PLAY_PROGRESS, data => {
+  position = data.currentPosition;
+  duration = data.duration;
+  updateProgress();
+});
+
+
+const fallbackNames = [
+  "hislerim", "kalbim.acıyor", "taharet.musluğu", "anka.kuşu ft. Maestro",
+  "thierry.henry", "bunun.adı.şam", "tost.makinesinde.omlet ft. Xir",
+  "beynim.vücuduma.vücudum.beynime.temas.etmiyor", "çocukluk.oyuncaklarım",
+  "sıkıntılı.1.şey ft. Orchi", "yanomami", "yaşarken.ölenler.için ft. Cash Flow",
+  "c.r.e.a.m.", "lirikal.mücahit", "671", "güvercin",
+  "boşluğa.doğru.donuk.derin.dikizler", "psikolojik.gerilim ft. Ozeii",
+  "ayna", "titanic", "nikah.masası", "sana.yazdım", "mfö",
+  "inziva ft. Çağrı Sinci", "mahşerin.4.atlısı ft. Ozeii",
+  "zaten.unutmak.için.içiyordum", "gaipten.sesler", "medusa",
+  "panik.atak.ve.depresyon", "şubat", "devlet.tarafından.raporluyum"
+];
+
+function getTrackTitle(t, i) {
+  if (t && t.title && t.title.trim() !== '') return t.title;
+  return fallbackNames[i] || ('şarkı ' + (i + 1));
+}
+
+function togglePlay() {
+  if (isPlaying) {
+    widget.pause();
+  } else {
+    widget.play();
+  }
+}
+
+function startProgressTracking() {
+  clearInterval(progressInterval);
+  progressInterval = setInterval(() => {
+    widget.getPosition(pos => {
+      position = pos;
+      updateProgress();
+    });
+  }, 1000);
+}
+
+function updateProgress() {
+  if (duration > 0) {
+    const pct = (position / duration) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    document.getElementById('time-current').textContent = formatTime(position);
+    document.getElementById('time-total').textContent = formatTime(duration);
+  }
+}
+
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function setVolume(delta) {
+  const slider = document.getElementById('volume-slider');
+  const newVal = Math.min(100, Math.max(0, parseInt(slider.value) + delta * 100));
+  slider.value = newVal;
+  widget.setVolume(newVal);
+}
+
+function onVolumeSlider(val) {
+  widget.setVolume(parseInt(val));
+}
+
+function updateNowPlaying() {
+  if (tracks.length === 0) return;
+  const t = tracks[currentIndex];
+  const title = getTrackTitle(t, currentIndex);
+  document.getElementById('now-playing').textContent = title;
+  document.getElementById('track-num').textContent = (currentIndex + 1) + ' / ' + tracks.length;
+  renderTracklist();
+}
+
+function renderTracklist() {
+  const list = document.getElementById('tracklist');
+  list.innerHTML = '';
+  tracks.forEach((t, i) => {
+    const div = document.createElement('div');
+    let cls = 'track-item upcoming';
+    if (i === currentIndex) cls = 'track-item active';
+    else if (i < currentIndex) cls = 'track-item played';
+    div.className = cls;
+    const title = getTrackTitle(t, i);
+    div.innerHTML = `
+      <span class="track-n">${String(i+1).padStart(2,'0')}</span>
+      <span class="track-dot"></span>
+      <span class="track-name">${title}</span>
+    `;
+    list.appendChild(div);
+  });
+}
+</script>
+</body>
+</html>
